@@ -1,0 +1,177 @@
+# Docker Compose Override for Development
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+
+version: '3.8'
+
+services:
+  # =============================================================================
+  # Development Application Service
+  # =============================================================================
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      PRELOAD_MODELS: "false"  # Skip model preloading in dev
+      RELOAD: "true"
+    volumes:
+      # Hot reload source code
+      - ./src:/app/src:ro
+      - ./configs:/app/configs:ro
+      - ./tests:/app/tests:ro
+      # Development tools
+      - ./notebooks:/app/notebooks
+      - ./experiments:/app/experiments
+      # Persistent development data
+      - dev_cache:/app/.cache
+    ports:
+      - "8000:8000"   # Main API
+      - "8888:8888"   # Jupyter Lab
+      - "8080:8080"   # Development server
+    command: >
+      bash -c "
+      echo 'Starting development services...' &&
+      python3 -m uvicorn video_ad_placement.api.main:app 
+      --host 0.0.0.0 --port 8000 --reload --reload-dir /app/src &
+      jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root &
+      wait
+      "
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+
+  # =============================================================================
+  # Development Worker (Limited Resources)
+  # =============================================================================
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      CELERY_CONCURRENCY: 1
+      WORKER_TYPE: video_processor_dev
+    volumes:
+      - ./src:/app/src:ro
+    deploy:
+      replicas: 1  # Only one worker in development
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 3G
+
+  # =============================================================================
+  # Development Database (Persistent)
+  # =============================================================================
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: devpassword
+    volumes:
+      - dev_postgres_data:/var/lib/postgresql/data
+      - ./docker/init/postgres-dev:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+
+  # =============================================================================
+  # Development Redis (Persistent)
+  # =============================================================================
+  redis:
+    volumes:
+      - dev_redis_data:/data
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+
+  # =============================================================================
+  # Development Tools Container
+  # =============================================================================
+  dev_tools:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./configs:/app/configs
+      - ./docs:/app/docs
+      - ./.git:/app/.git:ro
+    environment:
+      ENVIRONMENT: development
+    command: >
+      bash -c "
+      echo 'Development tools container ready.' &&
+      echo 'Available commands:' &&
+      echo '  pytest /app/tests' &&
+      echo '  black /app/src' &&
+      echo '  flake8 /app/src' &&
+      echo '  mypy /app/src' &&
+      tail -f /dev/null
+      "
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # =============================================================================
+  # Development Monitoring (Simplified)
+  # =============================================================================
+  prometheus:
+    volumes:
+      - ./docker/config/prometheus-dev.yml:/etc/prometheus/prometheus.yml:ro
+      - dev_prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'  # Shorter retention in dev
+      - '--web.enable-lifecycle'
+
+  grafana:
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: true  # Allow sign up in dev
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - dev_grafana_data:/var/lib/grafana
+
+  # =============================================================================
+  # Skip Heavy Services in Development
+  # =============================================================================
+  model_downloader:
+    profiles: ["production"]  # Skip in development
+
+  loki:
+    profiles: ["production"]  # Skip in development
+
+  promtail:
+    profiles: ["production"]  # Skip in development
+
+  nginx:
+    profiles: ["production"]  # Skip in development
+
+# =============================================================================
+# Development Volumes
+# =============================================================================
+volumes:
+  dev_cache:
+    driver: local
+  
+  dev_postgres_data:
+    driver: local
+  
+  dev_redis_data:
+    driver: local
+  
+  dev_prometheus_data:
+    driver: local
+  
+  dev_grafana_data:
+    driver: local 

@@ -1,0 +1,271 @@
+# Ensemble Depth Estimation Configuration
+# High-performance configuration for Apple Depth Pro and Marigold ensemble
+
+# Model configurations
+marigold:
+  model_name: "prs-eth/marigold-lcm-v1-0"
+  precision: "fp16"  # fp32, fp16, mixed
+  batch_size: 4
+  num_inference_steps: 5
+  ensemble_size: 5
+  processing_resolution: 768
+  resample_method: "bilinear"
+  enable_temporal_consistency: true
+  temporal_filter_type: "exponential"  # exponential, bilateral, kalman
+  temporal_alpha: 0.8
+  device_map: "auto"
+  offload_to_cpu: false
+  memory_efficient_attention: true
+  use_scheduler: "LCMScheduler"
+
+depth_pro:
+  model_name: "apple/DepthPro"
+  precision: "fp16"
+  batch_size: 8
+  use_tensorrt: true
+  tensorrt_workspace: 4096  # MB
+  enable_xformers: true
+  focal_length_mode: "auto"  # auto, fixed, estimated
+  metric_scale: "auto"  # auto, fixed, learned
+  device_map: "auto"
+  offload_to_cpu: false
+  memory_efficient: true
+  use_flash_attention: true
+
+# Ensemble configuration
+ensemble:
+  fusion_method: "confidence_based"  # weighted_average, confidence_based, learned_fusion, adaptive_selection, quality_aware
+  learned_fusion: true
+  adaptive_weights: true
+  
+  # Model weights (for weighted_average)
+  marigold_weight: 0.6
+  depth_pro_weight: 0.4
+  confidence_threshold: 0.7
+  
+  # Scene analysis
+  scene_analysis: true
+  complexity_threshold: 0.5
+  edge_density_weight: 0.3
+  texture_variance_weight: 0.4
+  
+  # Quality control
+  quality_assessment: true
+  min_confidence: 0.3
+  outlier_rejection: true
+  consistency_check: true
+  
+  # Performance optimization
+  parallel_inference: true
+  cache_predictions: false
+  memory_efficient: true
+  
+  # Multi-GPU support
+  multi_gpu: false
+  gpu_devices: [0, 1]  # GPU device IDs
+  data_parallel: false
+  model_parallel: false
+
+# Hardware optimization
+hardware:
+  device: "cuda"  # cuda, cpu, auto
+  mixed_precision: true
+  amp_enabled: true
+  compile_model: false  # PyTorch 2.0+ compilation
+  channels_last: true
+  gradient_checkpointing: false
+  
+  # Memory management
+  memory_fraction: 0.9
+  empty_cache_threshold: 0.8
+  max_memory_per_gpu: "auto"
+  offload_buffers: false
+
+# TensorRT optimization
+tensorrt:
+  enabled: true
+  fp16_mode: true
+  int8_mode: false
+  workspace_size: 4096  # MB
+  max_batch_size: 16
+  optimize_for_latency: true
+  cache_dir: "tensorrt_cache"
+  calibration_dataset: null
+  profile_shapes:
+    min: [1, 3, 240, 320]
+    opt: [4, 3, 480, 640]
+    max: [16, 3, 1080, 1920]
+
+# Preprocessing configuration
+preprocessing:
+  input_size: [480, 640]  # Height, Width
+  normalization:
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+  resize_mode: "bilinear"
+  padding_mode: "reflect"
+  crop_mode: "center"
+  
+# Postprocessing configuration
+postprocessing:
+  output_size: "original"  # original, fixed, [height, width]
+  depth_range: [0.1, 1000.0]  # meters
+  invalid_depth_threshold: 0.01
+  smoothing:
+    enabled: true
+    kernel_size: 5
+    sigma: 1.0
+  edge_preservation:
+    enabled: true
+    bilateral_filter: true
+    d: 9
+    sigma_color: 75
+    sigma_space: 75
+  
+  # Metric depth recovery
+  metric_scale_recovery:
+    enabled: true
+    method: "geometric"  # geometric, learned, hybrid
+    confidence_threshold: 0.8
+    sparse_points_ratio: 0.1
+
+# Quality profiles for different use cases
+quality_profiles:
+  fast:
+    marigold:
+      num_inference_steps: 1
+      ensemble_size: 1
+      processing_resolution: 384
+    depth_pro:
+      precision: "fp16"
+      use_tensorrt: true
+    ensemble:
+      fusion_method: "weighted_average"
+      parallel_inference: true
+      quality_assessment: false
+    
+  balanced:
+    marigold:
+      num_inference_steps: 4
+      ensemble_size: 3
+      processing_resolution: 512
+    depth_pro:
+      precision: "fp16"
+      use_tensorrt: true
+    ensemble:
+      fusion_method: "confidence_based"
+      parallel_inference: true
+      quality_assessment: true
+      
+  high_quality:
+    marigold:
+      num_inference_steps: 10
+      ensemble_size: 5
+      processing_resolution: 768
+    depth_pro:
+      precision: "fp32"
+      use_tensorrt: false
+    ensemble:
+      fusion_method: "learned_fusion"
+      parallel_inference: true
+      quality_assessment: true
+      consistency_check: true
+      
+  ultra:
+    marigold:
+      num_inference_steps: 50
+      ensemble_size: 10
+      processing_resolution: 1024
+    depth_pro:
+      precision: "fp32"
+      use_tensorrt: false
+    ensemble:
+      fusion_method: "quality_aware"
+      parallel_inference: true
+      quality_assessment: true
+      consistency_check: true
+      scene_analysis: true
+
+# Benchmarking configuration
+benchmark:
+  enabled: true
+  mode: "comprehensive"  # performance, accuracy, memory, latency, throughput, comprehensive
+  iterations: 100
+  warmup_iterations: 10
+  
+  # Test data
+  test_resolutions: 
+    - [240, 320]
+    - [480, 640]
+    - [720, 1280]
+    - [1080, 1920]
+  batch_sizes: [1, 2, 4, 8, 16]
+  
+  # Hardware monitoring
+  monitor_gpu: true
+  monitor_cpu: true
+  monitor_memory: true
+  
+  # Output
+  output_dir: "benchmark_results"
+  save_detailed_results: true
+  generate_plots: true
+  save_predictions: false
+  
+  # Validation
+  ground_truth_validation: false
+  quality_thresholds:
+    mae: 0.5
+    rmse: 1.0
+    relative_error: 0.2
+    edge_preservation: 0.7
+
+# Logging configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/ensemble_depth_estimation.log"
+  max_file_size: "100MB"
+  backup_count: 5
+  console_output: true
+
+# Paths and directories
+paths:
+  model_cache_dir: "models"
+  output_dir: "outputs"
+  temp_dir: "temp"
+  log_dir: "logs"
+  checkpoint_dir: "checkpoints"
+
+# Video processing configuration
+video:
+  fps: 30
+  codec: "h264"
+  quality: "high"
+  batch_processing: true
+  temporal_consistency: true
+  keyframe_interval: 30
+  
+# Real-time streaming configuration
+streaming:
+  enabled: false
+  input_source: "camera"  # camera, rtmp, file
+  output_format: "rtmp"
+  buffer_size: 5
+  latency_mode: "low"  # low, normal, high_quality
+  adaptive_quality: true
+
+# Experimental features
+experimental:
+  neural_architecture_search: false
+  dynamic_model_selection: false
+  online_learning: false
+  adversarial_training: false
+  
+# Debug configuration
+debug:
+  enabled: false
+  save_intermediate_results: false
+  visualize_attention: false
+  profile_memory: false
+  trace_execution: false 

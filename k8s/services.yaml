@@ -1,0 +1,152 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: video-ad-placement-app
+  namespace: video-ad-placement
+  labels:
+    app.kubernetes.io/name: video-ad-placement
+    app.kubernetes.io/component: app
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: video-ad-placement
+    app.kubernetes.io/component: app
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: video-ad-placement
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: video-ad-placement
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: video-ad-placement
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - name: prometheus
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: monitoring
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: video-ad-placement
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+    - name: grafana
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: monitoring
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: video-ad-placement
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/component: proxy
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/component: proxy
+
+---
+# Headless service for worker discovery
+apiVersion: v1
+kind: Service
+metadata:
+  name: video-ad-placement-worker-headless
+  namespace: video-ad-placement
+  labels:
+    app.kubernetes.io/name: video-ad-placement
+    app.kubernetes.io/component: worker
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: worker
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: video-ad-placement
+    app.kubernetes.io/component: worker 

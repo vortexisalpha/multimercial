@@ -1,0 +1,370 @@
+# YOLOv9 Object Detection Configuration
+# Optimized for video advertisement placement scenarios
+
+# Model configuration
+model:
+  model_path: "yolov9c.pt"
+  model_size: "yolov9c"  # yolov9n, yolov9s, yolov9m, yolov9c, yolov9e
+  input_size: [640, 640]  # [height, width]
+  num_classes: 15
+  class_names:
+    - "PERSON"
+    - "HAND" 
+    - "ARM"
+    - "FACE"
+    - "FURNITURE_CHAIR"
+    - "FURNITURE_TABLE"
+    - "FURNITURE_SOFA"
+    - "FURNITURE_BED"
+    - "FURNITURE_DESK"
+    - "ELECTRONIC_TV"
+    - "ELECTRONIC_LAPTOP"
+    - "ELECTRONIC_PHONE"
+    - "KITCHEN_APPLIANCE"
+    - "DECORATION"
+    - "PRODUCT"
+
+# Inference configuration
+inference:
+  confidence_threshold: 0.25
+  iou_threshold: 0.45
+  max_detections: 300
+  agnostic_nms: false
+  multi_label: false
+
+# Hardware configuration
+hardware:
+  device: "auto"  # auto, cpu, cuda, mps
+  half_precision: true
+  tensorrt_optimization: true
+  tensorrt_workspace_size: 4  # GB
+  
+# Batch processing
+batch:
+  batch_size: 8
+  max_batch_size: 32
+  adaptive_batching: true
+
+# Video-specific configuration
+video:
+  temporal_smoothing: true
+  temporal_alpha: 0.7
+  scene_adaptive_threshold: true
+  confidence_adaptation_rate: 0.1
+
+# Advertisement-specific configuration
+advertisement:
+  person_detection_boost: 1.2
+  furniture_detection_boost: 1.1
+  hand_tracking_boost: 1.3
+  min_person_confidence: 0.3
+  min_furniture_confidence: 0.4
+
+# Memory management
+memory:
+  memory_efficient: true
+  cache_size: 100
+  garbage_collection_frequency: 50
+
+# Performance optimization
+performance:
+  compile_model: false  # PyTorch 2.0+ compilation
+  channels_last: true
+  use_autocast: true
+
+# Training configuration
+training:
+  # Model configuration
+  model_size: "yolov9c"
+  input_size: [640, 640]
+  num_classes: 15
+  
+  # Training hyperparameters
+  epochs: 100
+  batch_size: 16
+  learning_rate: 0.001
+  weight_decay: 0.0005
+  momentum: 0.937
+  
+  # Data paths
+  train_data_path: "data/train"
+  val_data_path: "data/val"
+  test_data_path: "data/test"
+  data_yaml_path: "data/dataset.yaml"
+  
+  # Augmentation configuration
+  mosaic_prob: 1.0
+  mixup_prob: 0.1
+  copy_paste_prob: 0.1
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  degrees: 0.0
+  translate: 0.1
+  scale: 0.9
+  shear: 0.0
+  perspective: 0.0
+  flipud: 0.0
+  fliplr: 0.5
+  
+  # Loss configuration
+  box_loss_gain: 0.05
+  cls_loss_gain: 0.3
+  dfl_loss_gain: 1.5
+  
+  # Optimization
+  optimizer: "AdamW"  # SGD, Adam, AdamW
+  scheduler: "cosine"  # linear, cosine
+  warmup_epochs: 3
+  warmup_momentum: 0.8
+  warmup_bias_lr: 0.1
+  
+  # Validation and checkpointing
+  val_interval: 1
+  save_period: 10
+  patience: 50
+  
+  # Hardware configuration
+  device: "auto"
+  workers: 8
+  multi_gpu: false
+  amp: true  # Automatic Mixed Precision
+  
+  # Video-specific training
+  temporal_consistency: true
+  frame_sampling_rate: 1
+  sequence_length: 8
+  
+  # Advertisement-specific configuration
+  focus_on_person_detection: true
+  furniture_detection_weight: 1.5
+  hand_tracking_weight: 2.0
+  scene_complexity_adaptive: true
+  
+  # Deployment configuration
+  export_formats: ["torchscript", "onnx"]
+  tensorrt_optimization: true
+  quantization: false
+  
+  # Experiment tracking
+  project_name: "video_ad_placement"
+  experiment_name: "yolov9_training"
+  tags: []
+
+# Quality profiles for different use cases
+quality_profiles:
+  fast:
+    model:
+      model_size: "yolov9n"
+      input_size: [416, 416]
+    inference:
+      confidence_threshold: 0.3
+      iou_threshold: 0.5
+    batch:
+      batch_size: 16
+    hardware:
+      half_precision: true
+      tensorrt_optimization: true
+    video:
+      temporal_smoothing: false
+      scene_adaptive_threshold: false
+    
+  balanced:
+    model:
+      model_size: "yolov9s"
+      input_size: [640, 640]
+    inference:
+      confidence_threshold: 0.25
+      iou_threshold: 0.45
+    batch:
+      batch_size: 8
+    hardware:
+      half_precision: true
+      tensorrt_optimization: true
+    video:
+      temporal_smoothing: true
+      scene_adaptive_threshold: true
+      
+  high_quality:
+    model:
+      model_size: "yolov9c"
+      input_size: [832, 832]
+    inference:
+      confidence_threshold: 0.2
+      iou_threshold: 0.4
+    batch:
+      batch_size: 4
+    hardware:
+      half_precision: false
+      tensorrt_optimization: false
+    video:
+      temporal_smoothing: true
+      scene_adaptive_threshold: true
+      confidence_adaptation_rate: 0.05
+      
+  ultra:
+    model:
+      model_size: "yolov9e"
+      input_size: [1024, 1024]
+    inference:
+      confidence_threshold: 0.15
+      iou_threshold: 0.35
+    batch:
+      batch_size: 2
+    hardware:
+      half_precision: false
+      tensorrt_optimization: false
+    video:
+      temporal_smoothing: true
+      scene_adaptive_threshold: true
+      confidence_adaptation_rate: 0.02
+    advertisement:
+      person_detection_boost: 1.5
+      furniture_detection_boost: 1.3
+      hand_tracking_boost: 1.8
+
+# Dataset configuration
+dataset:
+  # YouTube dataset creation
+  youtube:
+    api_key: ""  # Set via environment variable
+    max_videos: 1000
+    video_duration_min: 30  # seconds
+    video_duration_max: 600  # seconds
+    download_quality: "720p"
+    frame_extraction_fps: 2
+    
+    # Content filtering
+    categories:
+      - "Howto & Style"
+      - "People & Blogs"
+      - "Entertainment"
+      - "Gaming"
+      - "Education"
+    
+    keywords:
+      - "indoor"
+      - "furniture"
+      - "room tour"
+      - "home"
+      - "office"
+      - "desk setup"
+      - "living room"
+      - "bedroom"
+    
+    # Annotation settings
+    auto_annotation: true
+    annotation_confidence_threshold: 0.7
+    manual_review_required: true
+  
+  # Augmentation for video content
+  augmentation:
+    # Spatial augmentations
+    horizontal_flip: 0.5
+    vertical_flip: 0.0
+    rotation_degrees: 10
+    scale_range: [0.8, 1.2]
+    translation_range: 0.1
+    
+    # Color augmentations
+    brightness_range: 0.2
+    contrast_range: 0.2
+    saturation_range: 0.2
+    hue_range: 0.1
+    
+    # Indoor/studio specific augmentations
+    lighting_variation: 0.3
+    shadow_augmentation: 0.2
+    furniture_occlusion: 0.1
+    
+    # Video-specific augmentations
+    temporal_crop: true
+    frame_dropout: 0.05
+    motion_blur: 0.1
+
+# Benchmarking configuration
+benchmark:
+  enabled: true
+  iterations: 100
+  warmup_iterations: 10
+  
+  # Test scenarios
+  test_resolutions:
+    - [416, 416]
+    - [640, 640]
+    - [832, 832]
+    - [1024, 1024]
+  
+  batch_sizes: [1, 2, 4, 8, 16]
+  
+  # Performance metrics
+  measure_latency: true
+  measure_throughput: true
+  measure_memory: true
+  measure_accuracy: true
+  
+  # Output configuration
+  output_dir: "benchmark_results"
+  save_detailed_results: true
+  generate_plots: true
+  
+  # Comparison baselines
+  compare_with_yolov8: true
+  compare_with_yolov5: true
+
+# Deployment configuration
+deployment:
+  # Model export settings
+  export_formats: ["onnx", "torchscript", "tensorrt"]
+  optimize_for_inference: true
+  
+  # TensorRT specific
+  tensorrt:
+    fp16_mode: true
+    int8_mode: false
+    workspace_size: 4096  # MB
+    max_batch_size: 16
+    
+  # Quantization settings
+  quantization:
+    enabled: false
+    method: "dynamic"  # dynamic, static, qat
+    calibration_dataset: "data/calibration"
+    
+  # API deployment
+  api:
+    host: "0.0.0.0"
+    port: 8000
+    workers: 4
+    max_queue_size: 100
+    timeout: 30
+
+# Logging and monitoring
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/yolov9_detection.log"
+  max_file_size: "100MB"
+  backup_count: 5
+
+# Experiment tracking
+mlflow:
+  tracking_uri: "http://localhost:5000"
+  experiment_name: "yolov9_video_ads"
+  run_name: "default_run"
+  
+# Paths and directories
+paths:
+  model_cache_dir: "models"
+  data_dir: "data"
+  output_dir: "outputs"
+  temp_dir: "temp"
+  log_dir: "logs"
+
+# Debug configuration
+debug:
+  enabled: false
+  save_debug_images: false
+  visualize_detections: false
+  profile_inference: false
+  debug_output_dir: "debug_output" 

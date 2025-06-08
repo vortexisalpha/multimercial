@@ -1,0 +1,206 @@
+# Marigold Depth Estimation Configuration
+# Advanced depth estimation using diffusion models with temporal consistency
+
+# Model Configuration
+model:
+  name: "prs-eth/marigold-lcm-v1-0"  # Main Marigold model
+  # Alternative models:
+  # - "prs-eth/marigold-v1-0"        # Original Marigold
+  # - "prs-eth/marigold-lcm-v1-0"    # LCM variant (faster)
+  cache_dir: null  # Use default HuggingFace cache
+  device: "auto"   # auto, cuda, cpu
+
+# Quality and Performance Settings
+quality:
+  mode: "balanced"  # fast, balanced, high_quality, ultra
+  precision: "fp16"  # fp32, fp16, mixed
+  
+  # Custom quality settings (override mode defaults)
+  ensemble_size: 5        # Number of ensemble predictions (1-10)
+  inference_steps: 10     # Diffusion denoising steps (4-20)
+  batch_size: 4          # Batch size for processing
+
+# Processing Configuration
+processing:
+  max_resolution: [768, 1024]  # [height, width] max resolution
+  adaptive_batch_size: true    # Adjust batch size based on GPU memory
+  normalize_output: true       # Normalize depth values to [0, 1]
+  depth_range: [0.0, 1.0]     # Output depth range
+  output_dtype: "float32"     # float16, float32
+
+# Temporal Consistency
+temporal:
+  enabled: true
+  method: "optical_flow"  # none, exponential, optical_flow, bilateral, kalman
+  alpha: 0.3             # Temporal smoothing factor (0.0-1.0)
+  window_size: 5         # Temporal window size
+  
+  # Optical flow settings
+  optical_flow:
+    method: "farneback"  # farneback, lucas_kanade
+    motion_threshold: 0.1
+    occlusion_threshold: 0.5
+  
+  # Bilateral temporal filter settings
+  bilateral:
+    sigma_spatial: 5.0
+    sigma_intensity: 0.1
+  
+  # Kalman filter settings
+  kalman:
+    process_noise: 1e-4
+    measurement_noise: 1e-2
+
+# GPU Memory Management
+memory:
+  max_gpu_memory_gb: 8.0      # Maximum GPU memory to use
+  cleanup_threshold: 0.9      # Memory cleanup threshold (0.0-1.0)
+  use_attention_slicing: true # Enable attention slicing for memory efficiency
+  use_cpu_offload: false      # Offload model to CPU when not in use
+  enable_xformers: true       # Use xformers for memory optimization
+
+# Optimization Settings
+optimization:
+  compile_model: false        # Use torch.compile (experimental)
+  use_mixed_precision: true   # Enable automatic mixed precision
+  gradient_checkpointing: false
+  
+  # Advanced optimizations
+  enable_flash_attention: true
+  use_scaled_dot_product: true
+
+# Video Processing
+video:
+  output_fps: 30
+  visualization_mode: "side_by_side"  # colormap, side_by_side, overlay
+  colormap: "plasma"          # plasma, viridis, jet, turbo, inferno
+  save_individual_frames: false
+  frame_output_format: "png"  # png, jpg
+  quality: 95                 # JPEG quality (0-100)
+
+# Monitoring and Debugging
+monitoring:
+  log_gpu_memory: true        # Log GPU memory usage
+  save_intermediate: false    # Save intermediate processing results
+  benchmark_mode: false       # Enable detailed benchmarking
+  progress_bar: true          # Show progress bars
+  log_level: "INFO"          # DEBUG, INFO, WARNING, ERROR
+
+# Quality Assessment
+quality_assessment:
+  enabled: true
+  metrics:
+    - "edge_density"
+    - "gradient_magnitude"
+    - "depth_consistency"
+    - "temporal_smoothness"
+  
+  # Automatic quality adjustment
+  auto_adjust: false
+  target_fps: 10.0
+  quality_threshold: 0.8
+
+# Output Configuration
+output:
+  base_dir: "output/depth_estimation"
+  save_depth_maps: true
+  save_visualizations: true
+  save_metrics: true
+  
+  # File naming
+  depth_filename: "depth_{frame_idx:06d}.npy"
+  visualization_filename: "vis_{frame_idx:06d}.png"
+  metrics_filename: "metrics.json"
+
+# Preprocessing
+preprocessing:
+  resize_method: "lanczos"    # nearest, bilinear, lanczos
+  normalize_input: true       # Normalize input images
+  input_range: [0, 255]      # Expected input range
+  
+  # Image enhancement (optional)
+  enhance_contrast: false
+  gamma_correction: 1.0
+  denoise: false
+
+# Error Handling and Recovery
+error_handling:
+  max_retries: 3
+  retry_delay: 1.0           # Seconds between retries
+  fallback_quality: "fast"   # Fallback quality mode on errors
+  continue_on_error: true    # Continue processing on non-critical errors
+  
+  # Memory error handling
+  reduce_batch_on_oom: true
+  min_batch_size: 1
+
+# Experimental Features
+experimental:
+  use_tensorrt: false        # TensorRT optimization (NVIDIA GPUs)
+  quantization: null         # int8, int16, null
+  distillation: false        # Use knowledge distillation
+  
+  # Custom model variants
+  use_custom_scheduler: false
+  scheduler_type: "ddim"     # ddim, ddpm, euler, lms
+
+# Validation and Testing
+validation:
+  enabled: false
+  reference_dataset: null    # Path to reference depth dataset
+  metrics_to_compute:
+    - "mae"
+    - "rmse"
+    - "relative_error"
+    - "correlation"
+  
+  validation_frequency: 100  # Validate every N frames
+
+# Integration Settings
+integration:
+  # Advertisement placement integration
+  ad_placement:
+    depth_threshold: 0.5     # Depth threshold for placement
+    min_surface_area: 0.1    # Minimum surface area ratio
+    occlusion_handling: true
+  
+  # 3D reconstruction integration
+  reconstruction:
+    point_cloud_generation: false
+    mesh_reconstruction: false
+    texture_mapping: false
+
+# Profiles for different use cases
+profiles:
+  real_time:
+    quality:
+      mode: "fast"
+      ensemble_size: 3
+      inference_steps: 4
+    processing:
+      batch_size: 8
+    temporal:
+      method: "exponential"
+      alpha: 0.2
+  
+  high_quality:
+    quality:
+      mode: "ultra"
+      ensemble_size: 10
+      inference_steps: 20
+    processing:
+      batch_size: 1
+    temporal:
+      method: "optical_flow"
+      alpha: 0.5
+  
+  balanced:
+    quality:
+      mode: "balanced"
+      ensemble_size: 5
+      inference_steps: 10
+    processing:
+      batch_size: 4
+    temporal:
+      method: "optical_flow"
+      alpha: 0.3 

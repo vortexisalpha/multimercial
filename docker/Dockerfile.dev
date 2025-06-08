@@ -1,0 +1,128 @@
+# Development Dockerfile for AI-Powered Video Advertisement Placement System
+# Optimized for development workflow with hot reloading
+
+FROM nvidia/cuda:11.8-devel-ubuntu22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=${CUDA_HOME}/bin:${PATH}
+ENV LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}
+ENV ENVIRONMENT=development
+ENV LOG_LEVEL=DEBUG
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3.10-dev \
+    python3-pip \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    curl \
+    unzip \
+    # Graphics and video processing
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    # FFmpeg with hardware acceleration
+    ffmpeg \
+    libavcodec-dev \
+    libavformat-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libavresample-dev \
+    # OpenGL and rendering
+    libglfw3-dev \
+    libglew-dev \
+    libopengl0 \
+    libgl1-mesa-dev \
+    # Development tools
+    vim \
+    htop \
+    tmux \
+    tree \
+    jq \
+    # Additional dependencies
+    pkg-config \
+    libhdf5-dev \
+    libopenblas-dev \
+    liblapack-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev \
+    libgtk-3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install cuDNN 8
+RUN wget https://developer.download.nvidia.com/compute/cudnn/8.9.7/local_installers/cudnn-linux-x86_64-8.9.7.29_cuda11-archive.tar.xz \
+    && tar -xf cudnn-linux-x86_64-8.9.7.29_cuda11-archive.tar.xz \
+    && cp cudnn-linux-x86_64-8.9.7.29_cuda11-archive/include/cudnn*.h /usr/local/cuda/include \
+    && cp -P cudnn-linux-x86_64-8.9.7.29_cuda11-archive/lib/libcudnn* /usr/local/cuda/lib64 \
+    && chmod a+r /usr/local/cuda/include/cudnn*.h /usr/local/cuda/lib64/libcudnn* \
+    && rm -rf cudnn-linux-x86_64-8.9.7.29_cuda11-archive*
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser -s /bin/bash
+RUN mkdir -p /app /data /models /cache /tmp/video_processing && \
+    chown -R appuser:appuser /app /data /models /cache /tmp/video_processing
+
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip setuptools wheel
+
+# Install PyTorch with CUDA 11.8 support
+RUN pip install torch==2.0.1+cu118 torchvision==0.15.2+cu118 torchaudio==2.0.2+cu118 \
+    --extra-index-url https://download.pytorch.org/whl/cu118
+
+# Install development dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
+
+# Install additional development tools
+RUN pip install \
+    jupyter==1.0.0 \
+    jupyterlab==4.0.3 \
+    ipdb==0.13.13 \
+    pytest-xdist==3.3.1 \
+    coverage==7.3.0 \
+    watchdog==3.0.0 \
+    pre-commit==3.3.3 \
+    black==23.7.0 \
+    isort==5.12.0 \
+    flake8==6.0.0 \
+    mypy==1.4.1 \
+    pytest-asyncio==0.21.1 \
+    pytest-mock==3.11.1 \
+    pytest-cov==4.1.0 \
+    gunicorn==21.2.0 \
+    uvicorn==0.23.2 \
+    fastapi==0.103.0 \
+    redis==4.6.0 \
+    celery==5.3.1
+
+# Switch to non-root user
+USER appuser
+WORKDIR /app
+
+# Create development directories
+RUN mkdir -p /app/logs /app/notebooks /app/experiments
+
+# Set up Jupyter configuration
+RUN jupyter lab --generate-config
+RUN echo "c.ServerApp.ip = '0.0.0.0'" >> ~/.jupyter/jupyter_lab_config.py
+RUN echo "c.ServerApp.allow_root = False" >> ~/.jupyter/jupyter_lab_config.py
+RUN echo "c.ServerApp.token = ''" >> ~/.jupyter/jupyter_lab_config.py
+RUN echo "c.ServerApp.password = ''" >> ~/.jupyter/jupyter_lab_config.py
+
+# Expose ports for development services
+EXPOSE 8000 8888 5555 8080
+
+# Default command for development
+CMD ["python3", "-m", "uvicorn", "video_ad_placement.api.main:app", \
+     "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/src"] 
