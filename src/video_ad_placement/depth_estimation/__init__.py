@@ -53,9 +53,27 @@ from .benchmarking import (
     DatasetLoader
 )
 
+from .depth_pro_estimator import (
+    DepthProEstimator,
+    DepthProConfig,
+    DepthProMetrics,
+    DepthProPrecision,
+    DepthProOptimization
+)
+
+# Main classes
+'MarigoldDepthEstimator',
+'DepthEstimationConfig',
+'DepthEstimationMetrics',
+
+# Create alias for backwards compatibility
+DepthEstimator = MarigoldDepthEstimator
+
 __all__ = [
     # Main classes
+    'DepthEstimator',
     'MarigoldDepthEstimator',
+    'DepthProEstimator',
     'DepthEstimationConfig',
     'DepthEstimationMetrics',
     

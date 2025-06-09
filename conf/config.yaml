@@ -1,0 +1,184 @@
+# Default Configuration for Video Ad Placement Service
+# Environment: Development
+
+environment: development
+debug: true
+name: "Video Ad Placement Service"
+version: "1.0.0"
+description: "AI-powered video advertisement placement service"
+
+# Video Processing Configuration
+video_processing:
+  quality_level: high
+  processing_mode: batch
+  max_workers: 2
+  use_gpu: false  # Set to false for easier testing
+  gpu_devices: [0]
+  max_memory_usage: 2048.0  # MB
+  batch_size: 8
+  prefetch_frames: 4
+  cache_size: 100
+  max_retries: 3
+  retry_delay: 1.0
+  checkpoint_interval: 50
+  auto_recovery: true
+  fallback_quality: medium
+  depth_estimation_model: "marigold"
+  object_detection_model: "yolov9"
+  min_wall_area: 1.5
+  max_wall_distance: 8.0
+  tv_width: 1.0
+  tv_height: 0.6
+  output_formats: ["mp4"]
+  output_qualities: ["1080p"]
+  intermediate_outputs: false
+  save_debug_data: true
+  enable_profiling: true
+  metrics_interval: 2.0
+  health_check_interval: 5.0
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+  reload: true
+  debug: true
+  title: "Video Ad Placement API"
+  description: "Advanced video advertisement placement service"
+  version: "1.0.0"
+  api_prefix: "/api/v1"
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+  openapi_url: "/openapi.json"
+  max_request_size: 104857600  # 100MB
+  request_timeout: 300.0
+  max_concurrent_requests: 50
+  cors_origins: ["*"]
+  cors_methods: ["*"]
+  cors_headers: ["*"]
+  allow_credentials: true
+  rate_limit_enabled: true
+  rate_limit_requests: 100
+  rate_limit_window: 60
+  rate_limit_storage: "memory"
+  websocket_enabled: true
+  websocket_path: "/ws"
+  max_websocket_connections: 100
+
+# Database Configuration
+database:
+  type: sqlite  # Use SQLite for easier testing
+  host: "localhost"
+  port: 5432
+  name: "video_ad_placement_dev"
+  username: "dev_user"
+  password: ""
+  min_connections: 1
+  max_connections: 5
+  connection_timeout: 10.0
+  pool_recycle: 3600
+  redis_host: "localhost"
+  redis_port: 6379
+  redis_db: 0
+  redis_password: ""
+  redis_ttl: 3600
+  echo_sql: false
+  auto_migrate: true
+  create_tables: true
+
+# Cloud Configuration
+cloud:
+  provider: local
+  region: "us-east-1"
+  storage_bucket: "video-processing-dev"
+  storage_prefix: "dev/"
+  enable_encryption: false
+  retention_days: 7
+  access_key: ""
+  secret_key: ""
+  service_account_key: ""
+  cdn_enabled: false
+  cdn_domain: ""
+  enable_distributed: false
+  max_workers: 2
+  worker_instance_type: "t3.small"
+  auto_scaling: false
+  enable_cloud_monitoring: false
+  metrics_namespace: "VideoProcessingDev"
+
+# Security Configuration
+security:
+  jwt_secret_key: "dev_secret_key_change_in_production"
+  jwt_algorithm: "HS256"
+  jwt_expiration: 3600
+  jwt_refresh_expiration: 86400
+  api_key_header: "X-API-Key"
+  api_key_length: 32
+  oauth_enabled: false
+  oauth_provider: "google"
+  oauth_client_id: ""
+  oauth_client_secret: ""
+  oauth_redirect_uri: ""
+  ssl_enabled: false
+  ssl_cert_path: ""
+  ssl_key_path: ""
+  enable_security_headers: true
+  hsts_max_age: 31536000
+  min_password_length: 8
+  password_hash_rounds: 12
+  session_timeout: 1800
+  max_sessions_per_user: 3
+
+# Monitoring Configuration
+monitoring:
+  log_level: DEBUG
+  log_format: "json"
+  log_file: "logs/video_ad_placement.log"
+  log_rotation: "1 day"
+  log_retention: "7 days"
+  metrics_enabled: true
+  metrics_port: 9090
+  metrics_path: "/metrics"
+  prometheus_enabled: false
+  prometheus_gateway: ""
+  prometheus_job: "video-ad-placement-dev"
+  health_check_enabled: true
+  health_check_interval: 30.0
+  health_check_timeout: 5.0
+  alerting_enabled: false
+  alert_webhook: ""
+  alert_channels: []
+  tracing_enabled: false
+  jaeger_endpoint: ""
+  trace_sample_rate: 0.1
+
+# Payment Configuration
+payment:
+  provider: "stripe"
+  public_key: ""
+  private_key: ""
+  webhook_secret: ""
+  price_per_minute: 0.10
+  free_tier_minutes: 60
+  premium_tier_multiplier: 2.0
+  billing_cycle: "monthly"
+  currency: "USD"
+  tax_rate: 0.0
+  enable_subscriptions: false
+  enable_usage_billing: false
+  enable_free_tier: true
+
+# Feature Flags
+features:
+  websocket_support: true
+  batch_processing: true
+  real_time_processing: false  # Disabled for dev
+  cloud_storage: false  # Disabled for dev
+  payment_integration: false
+  advanced_analytics: true
+
+# Runtime Settings
+max_video_size: 1073741824  # 1GB
+max_processing_time: 1800  # 30 minutes
+cleanup_interval: 300  # 5 minutes 

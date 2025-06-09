@@ -17,38 +17,53 @@ Features:
 """
 
 from .plane_models import (
-    Plane, PlaneDetectionConfig, PlaneQuality, PlaneType,
-    SurfaceNormalConfig, TemporalTrackingConfig, WallQualityMetrics
+    Plane, PlaneDetectionConfig, PlaneQuality,
+    PlaneType, SurfaceNormalConfig, TemporalTrackingConfig
 )
+
 from .plane_detector import PlaneDetector
-from .surface_normal_estimator import SurfaceNormalEstimator, HybridNormalEstimator
-from .temporal_tracker import TemporalPlaneTracker
-from .geometry_utils import GeometryUtils, CameraProjection, PlaneGeometry
+
+from .geometry_utils import (
+    GeometryUtils, CameraParameters, CameraProjection, PlaneGeometry
+)
+
+from .temporal_tracker import (
+    TemporalPlaneTracker, PlaneTrack, PlaneAssociator,
+    TemporalConsistencyValidator
+)
+
+# New temporal consistency system
+from .temporal_consistency import (
+    TemporalConsistencyManager, TVPlacement, TVGeometry, 
+    LightingEnvironment, QualityMetrics, TemporalConfig,
+    TVPlacementState, QualityLevel,
+    ExtendedKalmanFilter, OcclusionHandler, 
+    LightingConsistencyManager, QualityAssessment,
+    ArtifactDetector, PredictionInterpolation
+)
+
+__version__ = "1.0.0"
 
 __all__ = [
-    # Core plane models and configuration
-    'Plane',
-    'PlaneDetectionConfig',
-    'PlaneQuality',
-    'PlaneType',
-    'SurfaceNormalConfig',
-    'TemporalTrackingConfig',
-    'WallQualityMetrics',
+    # Core data models
+    "Plane", "PlaneDetectionConfig", "PlaneQuality", "PlaneType",
+    "SurfaceNormalConfig", "TemporalTrackingConfig",
     
     # Plane detection
-    'PlaneDetector',
-    
-    # Surface normal estimation
-    'SurfaceNormalEstimator',
-    'HybridNormalEstimator',
-    
-    # Temporal tracking
-    'TemporalPlaneTracker',
+    "PlaneDetector",
     
     # Geometry utilities
-    'GeometryUtils',
-    'CameraProjection',
-    'PlaneGeometry',
-]
-
-__version__ = "1.0.0" 
+    "GeometryUtils", "CameraParameters", "CameraProjection", "PlaneGeometry",
+    
+    # Temporal tracking (original)
+    "TemporalPlaneTracker", "PlaneTrack", "PlaneAssociator",
+    "TemporalConsistencyValidator",
+    
+    # Temporal consistency system (new)
+    "TemporalConsistencyManager", "TVPlacement", "TVGeometry",
+    "LightingEnvironment", "QualityMetrics", "TemporalConfig",
+    "TVPlacementState", "QualityLevel",
+    "ExtendedKalmanFilter", "OcclusionHandler",
+    "LightingConsistencyManager", "QualityAssessment",
+    "ArtifactDetector", "PredictionInterpolation",
+] 
