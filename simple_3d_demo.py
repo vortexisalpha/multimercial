@@ -287,9 +287,12 @@ def main():
     print()
     
     # Paths
-    video_path = "/Users/ffmbp/Desktop/multimercial/logs/vid.mp4"
+    video_path = "/Users/ffmbp/Desktop/multimercial/logs/videoplayback.mp4"
     ad_image_path = "./uploads/advertisements/images.png"
     output_dir = "./outputs/simple_3d_demo"
+    
+    # Debug: Show exactly which video file we're using
+    print(f"🎯 Using video file: {video_path}")
     
     # Check files
     if not os.path.exists(video_path):
