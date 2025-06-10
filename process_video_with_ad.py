@@ -33,39 +33,59 @@ def resize_ad_to_fit(ad_image, video_width, video_height, scale_factor=0.3):
     return cv2.resize(ad_image, (new_width, new_height))
 
 def find_ad_placement_position(frame_width, frame_height, ad_width, ad_height, strategy="bottom_right"):
-    """Find the best position to place the advertisement."""
-    
+    """Compute a safe position to place the advertisement.
+
+    The previous implementation occasionally produced negative coordinates
+    when the advertisement size exceeded the available space, resulting in the
+    image being partially off screen. This version introduces a dynamic margin
+    based on the frame size and clamps the final position so the advertisement
+    always remains fully visible.
+    """
+
+    margin = int(0.05 * min(frame_width, frame_height))
+
     positions = {
-        "top_left": (20, 20),
-        "top_right": (frame_width - ad_width - 20, 20),
-        "bottom_left": (20, frame_height - ad_height - 20),
-        "bottom_right": (frame_width - ad_width - 20, frame_height - ad_height - 20),
-        "center": ((frame_width - ad_width) // 2, (frame_height - ad_height) // 2)
+        "top_left": (margin, margin),
+        "top_right": (max(margin, frame_width - ad_width - margin), margin),
+        "bottom_left": (margin, max(margin, frame_height - ad_height - margin)),
+        "bottom_right": (
+            max(margin, frame_width - ad_width - margin),
+            max(margin, frame_height - ad_height - margin),
+        ),
+        "center": ((frame_width - ad_width) // 2, (frame_height - ad_height) // 2),
     }
-    
-    return positions.get(strategy, positions["bottom_right"])
+
+    x, y = positions.get(strategy, positions["bottom_right"])
+    x = max(0, min(x, frame_width - ad_width))
+    y = max(0, min(y, frame_height - ad_height))
+    return (x, y)
 
 def create_transparent_overlay(frame, ad_image, position, opacity=0.8):
-    """Create a semi-transparent overlay of the advertisement."""
+    """Create a semi-transparent overlay of the advertisement.
+
+    Supports advertisements with or without an alpha channel. The region is
+    automatically clamped to the frame dimensions to avoid clipping.
+    """
     x, y = position
     ad_height, ad_width = ad_image.shape[:2]
-    
-    # Ensure we don't go out of bounds
+
     frame_height, frame_width = frame.shape[:2]
-    if x + ad_width > frame_width:
-        ad_width = frame_width - x
-        ad_image = ad_image[:, :ad_width]
-    if y + ad_height > frame_height:
-        ad_height = frame_height - y
-        ad_image = ad_image[:ad_height, :]
-    
-    # Create overlay
+    ad_width = min(ad_width, frame_width - x)
+    ad_height = min(ad_height, frame_height - y)
+    ad_image = ad_image[:ad_height, :ad_width]
+
+    if ad_image.shape[2] == 4:
+        # Handle alpha channel explicitly
+        alpha = (ad_image[:, :, 3] / 255.0 * opacity).reshape(ad_height, ad_width, 1)
+        ad_rgb = ad_image[:, :, :3]
+        roi = frame[y:y+ad_height, x:x+ad_width].astype(float)
+        blended = roi * (1 - alpha) + ad_rgb.astype(float) * alpha
+        frame[y:y+ad_height, x:x+ad_width] = blended.astype(frame.dtype)
+        return frame
+
     overlay = frame.copy()
     overlay[y:y+ad_height, x:x+ad_width] = ad_image
-    
-    # Blend with original frame
-    result = cv2.addWeighted(frame, 1-opacity, overlay, opacity, 0)
-    return result
+    return cv2.addWeighted(frame, 1 - opacity, overlay, opacity, 0)
 
 def add_border_and_shadow(ad_image):
     """Add a nice border and shadow effect to the advertisement."""
